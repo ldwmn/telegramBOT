@@ -1,7 +1,8 @@
-from telegram.ext import Updater, Dispatcher, CommandHandler
-from telegram.ext import MessageHandler, CallbackContext
+from telegram.ext import Updater, Dispatcher, CallbackContext
+from telegram.ext import MessageHandler, CommandHandler, CallbackQueryHandler
 from telegram.ext import Filters
 from telegram import Update, ReplyKeyboardMarkup, ReplyKeyboardRemove
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 import telegramTOKEN
 import logging
 
@@ -19,8 +20,13 @@ def main():
     echo_handler = MessageHandler(Filters.text, do_echo)
     start_handler = CommandHandler(['start', 'help'], do_start)
     keyboard_handler = CommandHandler('keyboard', do_keyboard)
+    inline_keyboard_handler = CommandHandler('inline_keyboard', do_inline_keyboard)
+    callback_handler = CallbackQueryHandler(keyboard_react)
+
 
     dispatcher.add_handler(keyboard_handler)
+    dispatcher.add_handler(inline_keyboard_handler)
+    dispatcher.add_handler(callback_handler)
     dispatcher.add_handler(start_handler)
     dispatcher.add_handler(echo_handler)
 
@@ -51,7 +57,8 @@ def do_start(update=Update, context=CallbackContext):
             'Я знаю комманды:',
             '/start',
             '/help',
-            '/keyboard'
+            '/keyboard',
+            '/inline_keyboard'
     ]
     text = '\n'.join(text)
 
@@ -63,7 +70,7 @@ def do_start(update=Update, context=CallbackContext):
 
 def do_keyboard(update=Update, context=CallbackContext):
     buttons = [
-        ['a', 'b'],
+        ['/help', '/start'],
         ['c', 'd'],
         ['e', 'f']
     ]
@@ -75,5 +82,38 @@ def do_keyboard(update=Update, context=CallbackContext):
         reply_markup=keyboard
     )
 
+
+def do_inline_keyboard(update=Update, context=CallbackContext):
+    user_id = update.message.from_user.id
+    logger.info(f'{user_id=} вызвал функцию do_inline_keyboard')
+
+    buttons = [
+        ['/help', '/start'],
+        ['c', 'd'],
+        ['e', 'f']
+    ]
+    keyboard_buttons = [[InlineKeyboardButton(text=text, callback_data=text) for text in row] for row in buttons]
+
+    keyboard = InlineKeyboardMarkup(keyboard_buttons)
+    text = 'выбери:'
+    update.message.reply_text(
+        text,
+        reply_markup=keyboard
+    )
+
+
+def keyboard_react(update=Update, context=CallbackContext):
+    '''query = update.callback_query
+
+    text = 'Выбери еще раз' #написать ответ для inline_keyboard
+    update.message.reply_text(
+        text
+    )'''
+    pass
+
+
+
+
 if __name__ == '__main__':
     main()
+
