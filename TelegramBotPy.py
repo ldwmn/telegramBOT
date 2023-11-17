@@ -6,6 +6,7 @@ from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 import telegramTOKEN
 import logging
 import datetime
+from fsm import register_handler
 
 TOKEN = telegramTOKEN.TOKEN
 
@@ -34,6 +35,7 @@ def main():
     dispatcher.add_handler(set_timer_handler)
     dispatcher.add_handler(stop_timer_handler)
     dispatcher.add_handler(help_handler)
+    dispatcher.add_handler(register_handler)
 
     dispatcher.add_handler(echo_handler)
 
@@ -64,6 +66,7 @@ def do_start(update=Update, context=CallbackContext):
     text = [
         f'Привет, <b>{user_full_name}!</b>',
         'Этот бот знает команды, например:',
+        '<b>/register</b>  -    Зарегистрироваться'
         '<b>/start</b>  -  перезапустит бота',
         '<b>/help</b>  -  поможет тебе, если у тебя что-то не получается',
         '<b>/keyboard</b>  -  вызовет клавиатуру ',
@@ -126,7 +129,7 @@ def do_inline_keyboard(update: Update, context: CallbackContext):
     user_id = update.message.from_user.id
     logger.info(f'{user_id=} вызвал функцию do_inline_keyboard')
     buttons = [
-        ['Секундомер', 'help'],
+        ['Секундомер', '/help'],
     ]
     keyboard_buttons = [[InlineKeyboardButton(text=text, callback_data=text) for text in row] for row in buttons]
     keyboard = InlineKeyboardMarkup(keyboard_buttons)
@@ -143,16 +146,20 @@ def keyboard_react(update: Update, context: CallbackContext):
     query = update.callback_query
     chat_id = update.effective_chat.id
     user_id = update.effective_user.id
+
+    key = f'{user_id}_timer'
+
     logger.info(f'{user_id=} keyboard_react')
     print(query.data)
     if query.data == 'Секундомер':
         set_timer(update, context)
-    if query.data == 'help':
+    if query.data == '/help':
         do_help(update, context)
 
     query.bot.send_message(
         chat_id=chat_id,
-        reply_markup=ReplyKeyboardRemove())
+        reply_markup=ReplyKeyboardRemove()
+    )
 
 def set_timer(update, context):
     logger.info(f'Выполнена функция {set_timer}')
