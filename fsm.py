@@ -5,12 +5,55 @@ from telegram.ext import Updater, Dispatcher
 from telegram.ext import MessageHandler, CommandHandler, CallbackQueryHandler, ConversationHandler
 from telegram.ext import CallbackContext
 from telegram.ext import Filters
-from human import Human
+from db import find_user_by_id
+from db import write_to_db
 import logging
 
 logger = logging.getLogger(__name__)
 
 WAIT_NAME, WAIT_SURNAME, WAIT_BIRTHDAY = range(3)
+
+
+
+def check_register(update: Update, context: CallbackContext):
+    user_id = update.message.from_user.id
+    username = update.message.from_user.username
+    logger.info(f'{username=} {user_id=} вызвал функцию check_register')
+    user = find_user_by_id(user_id)
+    if not user:
+        return ask_name()
+    answer = [
+        f'Привет!',
+        f'Ты уже зарегистрирован со следующими данными:\n',
+        f'{user[1]',
+        f'{user[2]}',
+        f'{user[3]}'
+    ]
+    answer = '\n'.join(answer)
+    update.message.reply_text(answer, reply_markup=ReplyKeyboardRemove())
+    update.message.reply_text(text='вы не хотите перерегистрироваться', reply_markup=ReplyKeyboardRemove())
+    buttons = [
+        [InlineKeyboardButton(text='Да', callback_data='Да'),
+         InlineKeyboardButton(text='Нет', callback_data='Нет')]
+    ]
+    keyboard = InlineKeyboardMarkup.from_row(buttons)
+    update.message.reply_text(text='вы не хотите перерегистрироваться', reply_markup=keyboard)
+    return WAIT_OK
+    return ask_yes_no()
+
+
+    pass
+def ask_yes_no():
+    user_id = update.message.from_user.id
+    username = update.message.from_user.username
+    logger.info(f'{username=} {user_id=} вызвал функцию check_register')
+    pass
+def get_yes_no():
+    user_id = update.message.from_user.id
+    username = update.message.from_user.username
+    logger.info(f'{username=} {user_id=} вызвал функцию check_register')
+    pass
+
 
 
 def ask_name(update: Update, context: CallbackContext):
@@ -98,6 +141,7 @@ def get_birthday(update: Update, context: CallbackContext):
     return register(update, context)
 
 
+
 def register(update: Update, context: CallbackContext):
     user_id = update.message.from_user.id
     username = update.message.from_user.username
@@ -105,19 +149,33 @@ def register(update: Update, context: CallbackContext):
     name = context.user_data['name']
     surname = context.user_data['surname']
     birthday = context.user_data['birthday']
-    human = Human(name, surname, birthday)
+
     logger.info(f'{username=} {user_id=} вызвал функцию register: {name=} {surname=} {birthday=}')
+    write_to_db(user_id, name, surname, birthday)
     answer = [
         f'Привет!',
         f'Зарегистрировал тебя!',
         f'{name=}',
         f'{surname=}',
-        f'{birthday=}'
+        f'{birthday=}',
+
     ]
     answer = '\n'.join(answer)
     update.message.reply_text(answer)
 
+
+
+
+
+
     return ConversationHandler.END
+
+
+
+
+
+
+
 
 
 register_handler = ConversationHandler(

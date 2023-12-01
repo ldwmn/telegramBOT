@@ -114,7 +114,7 @@ def do_help(update=Update, context=CallbackContext):
 
 def do_keyboard(update=Update, context=CallbackContext):
     buttons = [
-        ['/start', '/help'],
+        ['/register', '/help'],
         ['/set', '/stop'],
         ['/inline_keyboard']
     ]
@@ -162,7 +162,7 @@ def keyboard_react(update: Update, context: CallbackContext):
     )
 
 def set_timer(update, context):
-    logger.info(f'Выполнена функция {set_timer}')
+    
     user_id = update.effective_user.id
     context.bot_data["user_id"] = user_id
     context.bot_data["timer"] = datetime.datetime.now()
