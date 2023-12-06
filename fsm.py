@@ -1,4 +1,4 @@
-from telegram import Update, ParseMode
+from telegram import Update, ParseMode, update
 from telegram import ReplyKeyboardMarkup, ReplyKeyboardRemove  # Обычная текстовая клавиатура
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup  # Инлайн-клавиатура
 from telegram.ext import Updater, Dispatcher
@@ -11,8 +11,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-WAIT_NAME, WAIT_SURNAME, WAIT_BIRTHDAY = range(3)
-
+WAIT_OK, WAIT_NAME, WAIT_SURNAME, WAIT_BIRTHDAY = range(4)
 
 
 def check_register(update: Update, context: CallbackContext):
@@ -21,39 +20,40 @@ def check_register(update: Update, context: CallbackContext):
     logger.info(f'{username=} {user_id=} вызвал функцию check_register')
     user = find_user_by_id(user_id)
     if not user:
-        return ask_name()
-    answer = [
-        f'Привет!',
-        f'Ты уже зарегистрирован со следующими данными:\n',
-        f'{user[1]',
-        f'{user[2]}',
-        f'{user[3]}'
-    ]
+        return ask_name(update, context)
+
+    answer = [f'Привет!',
+              f'Ты уже зарегистрирован со следующими данными:\n',
+              f'Имя: {user[1]}',
+              f'Фамилия: {user[2]}',
+              f'Дата рождения: {user[3]}']
     answer = '\n'.join(answer)
     update.message.reply_text(answer, reply_markup=ReplyKeyboardRemove())
-    update.message.reply_text(text='вы не хотите перерегистрироваться', reply_markup=ReplyKeyboardRemove())
-    buttons = [
-        [InlineKeyboardButton(text='Да', callback_data='Да'),
-         InlineKeyboardButton(text='Нет', callback_data='Нет')]
-    ]
+
+    buttons = [InlineKeyboardButton(text='Да', callback_data='Да'),
+               InlineKeyboardButton(text='Нет', callback_data='Нет')]
     keyboard = InlineKeyboardMarkup.from_row(buttons)
-    update.message.reply_text(text='вы не хотите перерегистрироваться', reply_markup=keyboard)
+    update.message.reply_text(text='Вы хотите повторно зарегистрироваться?', reply_markup=keyboard)
     return WAIT_OK
-    return ask_yes_no()
 
 
-    pass
 def ask_yes_no():
     user_id = update.message.from_user.id
     username = update.message.from_user.username
-    logger.info(f'{username=} {user_id=} вызвал функцию check_register')
-    pass
-def get_yes_no():
-    user_id = update.message.from_user.id
-    username = update.message.from_user.username
-    logger.info(f'{username=} {user_id=} вызвал функцию check_register')
+    logger.info(f'{username=} {user_id=} вызвал функцию ask_yes_no')
+
     pass
 
+
+
+def get_yes_no(update: Update, context: CallbackContext):
+    user_id = update.message.from_user.id
+    username = update.message.from_user.username
+    logger.info(f'{username=} {user_id=} вызвал функцию get_yes_no')
+    query = update.callback_query
+    if query.data == 'Да':
+        return ask_name(update, context)
+    return ConversationHandler.END
 
 
 def ask_name(update: Update, context: CallbackContext):
@@ -141,7 +141,6 @@ def get_birthday(update: Update, context: CallbackContext):
     return register(update, context)
 
 
-
 def register(update: Update, context: CallbackContext):
     user_id = update.message.from_user.id
     username = update.message.from_user.username
@@ -163,27 +162,15 @@ def register(update: Update, context: CallbackContext):
     answer = '\n'.join(answer)
     update.message.reply_text(answer)
 
-
-
-
-
-
     return ConversationHandler.END
 
 
-
-
-
-
-
-
-
 register_handler = ConversationHandler(
-    entry_points=[CommandHandler('register', ask_name)],
+    entry_points=[CommandHandler('register', check_register)],
     states={
         WAIT_NAME: [MessageHandler(Filters.text, get_name)],
         WAIT_SURNAME: [MessageHandler(Filters.text, get_surname)],
-        WAIT_BIRTHDAY: [MessageHandler(Filters.text, get_birthday)],
+        WAIT_BIRTHDAY: [MessageHandler(Filters.text, get_birthday)]
     },
     fallbacks=[]
 )
