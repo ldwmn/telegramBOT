@@ -18,7 +18,6 @@ logger = logging.getLogger(__name__)
 def main():
     updater = Updater(token=TOKEN)
     dispatcher: Dispatcher = updater.dispatcher
-    echo_handler = MessageHandler(Filters.text, do_echo)
     start_handler = CommandHandler(['start'], do_start)
     keyboard_handler = CommandHandler('keyboard', do_keyboard)
     inline_keyboard_handler = CommandHandler('inline_keyboard', do_inline_keyboard)
@@ -26,22 +25,24 @@ def main():
     callback_handler = CallbackQueryHandler(keyboard_react)
     stop_timer_handler = CommandHandler('stop', delete_timer)
     help_handler = CommandHandler(['help'], do_help)
-
+    echo_handler = MessageHandler(Filters.text, do_echo)
 
     dispatcher.add_handler(keyboard_handler)
+    dispatcher.add_handler(register_handler)
     dispatcher.add_handler(inline_keyboard_handler)
     dispatcher.add_handler(callback_handler)
     dispatcher.add_handler(start_handler)
     dispatcher.add_handler(set_timer_handler)
     dispatcher.add_handler(stop_timer_handler)
     dispatcher.add_handler(help_handler)
-    dispatcher.add_handler(register_handler)
+ 
 
     dispatcher.add_handler(echo_handler)
 
     updater.start_polling()
     logger.info(updater.bot.getMe())
     updater.idle()
+
 
 def do_echo(update: Update, context: CallbackContext):
     user_id = update.message.from_user.id
@@ -57,10 +58,8 @@ def do_echo(update: Update, context: CallbackContext):
     answer = '\n'.join(answer)
     update.message.reply_text(answer)
 
-def do_start(update=Update, context=CallbackContext):
-    user_id = update.message.from_user.id
-    username = update.message.from_user.username
 
+def do_start(update=Update, context=CallbackContext):
     user_full_name = update.message.from_user.full_name
 
     text = [
@@ -144,22 +143,14 @@ def do_inline_keyboard(update: Update, context: CallbackContext):
 
 def keyboard_react(update: Update, context: CallbackContext):
     query = update.callback_query
-    chat_id = update.effective_chat.id
     user_id = update.effective_user.id
-
-    key = f'{user_id}_timer'
-
     logger.info(f'{user_id=} keyboard_react')
-    print(query.data)
+
     if query.data == 'Секундомер':
         set_timer(update, context)
     if query.data == '/help':
         do_help(update, context)
 
-    query.bot.send_message(
-        chat_id=chat_id,
-        reply_markup=ReplyKeyboardRemove()
-    )
 
 def set_timer(update, context):
     

@@ -37,19 +37,7 @@ def check_register(update: Update, context: CallbackContext):
     return WAIT_OK
 
 
-def ask_yes_no():
-    user_id = update.message.from_user.id
-    username = update.message.from_user.username
-    logger.info(f'{username=} {user_id=} вызвал функцию ask_yes_no')
-
-    pass
-
-
-
 def get_yes_no(update: Update, context: CallbackContext):
-    user_id = update.message.from_user.id
-    username = update.message.from_user.username
-    logger.info(f'{username=} {user_id=} вызвал функцию get_yes_no')
     query = update.callback_query
     if query.data == 'Да':
         return ask_name(update, context)
@@ -57,15 +45,15 @@ def get_yes_no(update: Update, context: CallbackContext):
 
 
 def ask_name(update: Update, context: CallbackContext):
-    user_id = update.message.from_user.id
-    username = update.message.from_user.username
-    logger.info(f'{username=} {user_id=} вызвал функцию ask_name')
+
+    username = update.effective_chat.username
+    logger.info(f'{username=} {username=} вызвал функцию ask_name')
     answer = [
         f'Привет!',
         f'Назови свое имя'
     ]
     answer = '\n'.join(answer)
-    update.message.reply_text(answer, reply_markup=ReplyKeyboardRemove())
+    context.bot.send_message(update.effective_chat.id, answer, reply_markup=ReplyKeyboardRemove())
 
     return WAIT_NAME  # возвращаем СОСТОЯНИЕ ожидания имени
 
@@ -170,7 +158,8 @@ register_handler = ConversationHandler(
     states={
         WAIT_NAME: [MessageHandler(Filters.text, get_name)],
         WAIT_SURNAME: [MessageHandler(Filters.text, get_surname)],
-        WAIT_BIRTHDAY: [MessageHandler(Filters.text, get_birthday)]
+        WAIT_BIRTHDAY: [MessageHandler(Filters.text, get_birthday)],
+        WAIT_OK: [CallbackQueryHandler(get_yes_no)]
     },
     fallbacks=[]
 )
